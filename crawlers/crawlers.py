@@ -61,3 +61,5 @@ def process_all_newspapers(crawl_date):
     df.to_csv(csv_buffer, index=False)
     s3_resource = boto3.resource('s3')
     s3_resource.Object(BUCKET_NAME, 'output/%s_articles.csv' % crawl_date).put(Body=csv_buffer.getvalue())
+
+    return df

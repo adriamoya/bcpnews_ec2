@@ -5,10 +5,10 @@ import datetime
 import pandas as pd
 
 from crawlers.crawlers import process_all_newspapers
+from utils.select_news import models_fit_predict #, save_into_db, select_news
 # from utils.allow_stop import possible_stop
 # from utils.get_date import get_date_input
 # from utils.mail_body_generator import create_email_body
-# from utils.select_news import models_fit_predict, save_into_db, select_news
 # from utils.send_email import EmailSender
 # from utils.similarity import build_similarities
 
@@ -17,40 +17,25 @@ if __name__ == "__main__":
     # Request input date to crawl. Default is today().
     crawl_date = datetime.datetime.strptime('20180814',"%Y%m%d")  # get_date_input()
 
-    # VARIABLES
-    # =========
-
     # Running date.
     fecha = crawl_date.strftime("%Y%m%d")
-    # # Predicitions on articles downloaded for crawl_date`.
-    # model_results_lasso = 'data/%s_01_results_lasso.csv' % fecha
-    # model_results_xgb = 'data/%s_01_results_xgb.csv' % fecha
-    # # Selection of articles (prediction > 50%).
-    # news_selection_lasso = 'data/%s_02_selected_bbb_lasso.csv' % fecha
-    # news_selection_xgb = 'data/%s_02_selected_bbb_xgb.csv' % fecha
-    # # Final selection of articles after checking if they exists in database.
-    # final_selection_lasso = 'data/%s_03_final_bbb_lasso.csv' % fecha
-    # final_selection_xgb = 'data/%s_03_final_bbb_xgb.csv' % fecha
-    # # Database location.
-    # database = './BBB_database.db'
 
-    # # Crawling newspapers.
-    # print('\nCrawling the news...')
+    # # Save all articles into a unique JSON (YYYYMMDD_articles.json`).
+    # print('\nProcessing all the articles and saving them...')
     # print('-'*80)
-    # crawl_newspapers(crawl_date)
+    # df = process_all_newspapers(fecha)
     # print('Done.')
-    #
-    # Save all articles into a unique JSON (YYYYMMDD_articles.json`).
-    print('\nProcessing all the articles and saving them...')
+    import boto3
+    client = boto3.client('s3') #low-level functional API
+    newspaper_articles = client.get_object(Bucket="bluecaparticles", Key="output/%s_articles.csv" % fecha)
+    df = pd.read_csv(newspaper_articles['Body'], encoding='utf8')
+
+
+    # Fitting and predicting. Dumping predictions to `model_results_`.
+    print('\nTraining the models and predicting...')
     print('-'*80)
-    process_all_newspapers(fecha)
+    models_fit_predict(crawl_date, df)
     print('Done.')
-
-    # # Fitting and predicting. Dumping predictions to `model_results_`.
-    # print('\nTraining the models and predicting...')
-    # print('-'*80)
-    # models_fit_predict(crawl_date)
-    # print('Done.')
     #
     # # Selection news with score higher than.
     # print('\nSelecting higher score news...')

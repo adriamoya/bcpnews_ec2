@@ -65,7 +65,7 @@ class ArticleScraper(Article):
         except:
             self.article_obj["keywords"] = []
 
-        print(self.article_obj)
+        # print(self.article_obj)
         return self.article_obj
 
         # except:

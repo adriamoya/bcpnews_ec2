@@ -1,5 +1,6 @@
 
 # -*- coding: utf-8 -*-
+import os
 import boto3
 import pickle
 import xgboost
@@ -109,6 +110,7 @@ def models_fit_predict(crawl_date, df_subm):
                 # data.seek(0)    # move back to the beginning after writing
                 s3.Bucket(S3_BUCKET).download_file(path_model, 'tmp_model.h5')
                 model = load_model('tmp_model.h5')
+                os.remove('tmp_model.h5')
 
                 # Predict test set
                 # Guardamos una predccion de todo el test por fold y luego haremos la media

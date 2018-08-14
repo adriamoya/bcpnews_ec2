@@ -53,11 +53,11 @@ def process_all_newspapers(crawl_date):
 
     # Write articles to tmp and push to s3
     keys = articles_obj[0].keys()
-    with open('/output/%s_articles.csv' % crawl_date, 'w') as output_file:
+    with open('output/%s_articles.csv' % crawl_date, 'w') as output_file:
         dict_writer = csv.DictWriter(output_file, keys)
         dict_writer.writeheader()
         dict_writer.writerows(articles_obj)
 
     s3 = boto3.resource('s3')
     bucket = s3.Bucket(BUCKET_NAME)
-    s3.Object(BUCKET_NAME, '../output/%s_articles.csv' % crawl_date).put(Body=open('/output/%s_articles.csv' % crawl_date, 'rb'))
+    s3.Object(BUCKET_NAME, 'output/%s_articles.csv' % crawl_date).put(Body=open('/output/%s_articles.csv' % crawl_date, 'rb'))

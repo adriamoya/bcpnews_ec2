@@ -1,1 +1,15 @@
+*.0
+*.DS_Store
+*.log
+*.netlify
+*.pyc
+pass.txt
+tree.txt
+
+# *.csv
+# *.json
+
+*/__pycache__/
+__pycache__/
+dist/
 env/

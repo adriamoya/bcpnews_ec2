@@ -31,7 +31,7 @@ def process_all_newspapers(crawl_date):
     urls_downloaded = []
     path_articles = [x['Key'] for x in client.list_objects(Bucket=S3_BUCKET)['Contents'] if 'articles' in x['Key']]
     for idx, path_newspaper_articles in enumerate(path_articles):
-        if idx == 0:
+        if idx == 2:
             newspaper_articles = client.get_object(Bucket=S3_BUCKET, Key=path_newspaper_articles)
             print(idx, path_newspaper_articles)
             df_temp = pd.read_csv(newspaper_articles['Body'], encoding='utf8')
@@ -51,13 +51,20 @@ def process_all_newspapers(crawl_date):
         if new_article_obj:
             articles_obj.append(new_article_obj)
 
-    # Write articles to tmp and push to s3
-    keys = articles_obj[0].keys()
-    with open('output/%s_articles.csv' % crawl_date, 'w') as output_file:
-        dict_writer = csv.DictWriter(output_file, keys)
-        dict_writer.writeheader()
-        dict_writer.writerows(articles_obj)
+    # # Write articles to tmp and push to s3
+    # keys = articles_obj[0].keys()
+    # with open('output/%s_articles.csv' % crawl_date, 'w') as output_file:
+    #     dict_writer = csv.DictWriter(output_file, keys)
+    #     dict_writer.writeheader()
+    #     dict_writer.writerows(articles_obj)
 
-    s3 = boto3.resource('s3')
-    bucket = s3.Bucket(BUCKET_NAME)
-    s3.Object(BUCKET_NAME, 'output/%s_articles.csv' % crawl_date).put(Body=open('/output/%s_articles.csv' % crawl_date, 'rb'))
+    from io import StringIO
+    df = pd.DataFrame(articles_obj)
+    csv_buffer = StringIO()
+    df.to_csv(csv_buffer, index=False)
+    s3_resource = boto3.resource('s3')
+    s3_resource.Object(BUCKET_NAME, 'output/%s_articles.csv' % crawl_date).put(Body=csv_buffer.getvalue())
+
+    # s3 = boto3.resource('s3')
+    # bucket = s3.Bucket(BUCKET_NAME)
+    # s3.Object(BUCKET_NAME, 'output/%s_articles.csv' % crawl_date).put(Body=open('/output/%s_articles.csv' % crawl_date, 'rb'))

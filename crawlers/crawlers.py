@@ -31,7 +31,7 @@ def process_all_newspapers(crawl_date):
     # Read downloaded urls
     print('\n--> Reading downloaded urls...')
     urls_downloaded = []
-    path_articles = [x['Key'] for x in client.list_objects(Bucket=S3_BUCKET)['Contents'] if 'articles' in x['Key']]
+    path_articles = [x['Key'] for x in client.list_objects(Bucket=S3_BUCKET)['Contents'] if 'urls' in x['Key']]
     for idx, path_newspaper_articles in enumerate(path_articles):
         newspaper_articles = client.get_object(Bucket=S3_BUCKET, Key=path_newspaper_articles)
         print(idx, path_newspaper_articles)

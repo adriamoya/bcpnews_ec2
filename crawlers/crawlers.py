@@ -38,11 +38,13 @@ def process_all_newspapers(crawl_date):
             urls_downloaded.append(df_temp)
     del df_temp
     df_subm = pd.concat(urls_downloaded)
+    print(df_subm.shape)
 
     # Download articles
     articles_obj = []
     for idx, row in df_subm.iterrows():
         url = row['url']
+        print(url)
         newspaper = row['newspaper']
         new_article = ArticleScraper(url, newspaper)
         new_article_obj = new_article.parse_article()

@@ -7,7 +7,7 @@ import xgboost
 import numpy as np
 import pandas as pd
 import random as rn
-from io import BytesIO
+from io import BytesIO, StringIO
 # import tensorflow as tf
 from xgboost import XGBClassifier
 
@@ -17,29 +17,45 @@ from keras.models import load_model
 from keras.preprocessing import sequence
 from keras.preprocessing.text import Tokenizer
 
-def prepare_text_data(train_input, test_input, max_words, max_len):
-    print('--> Tokenizing and padding data...')
-    tok = Tokenizer(num_words=max_words)
-    tok.fit_on_texts(train_input)
-    sequences_train = tok.texts_to_sequences(train_input)
-    sequences_test = tok.texts_to_sequences(test_input)
-    print('--> Pad sequences (samples x time)')
-    test_input_f = sequence.pad_sequences(sequences_test, maxlen=max_len)
-    return test_input_f
 
 def models_fit_predict(crawl_date, df_subm):
 
     S3_BUCKET = "bluecaparticles"
-    path_train = "data/train.csv"
+    # path_train = "data/train.csv"
     path_model_xgb = "models/2nStageXGB.dat"
 
     client = boto3.client('s3') #low-level functional API
     s3 = boto3.resource('s3') #high-level object-oriented API
 
-    # Loading data
-    print('\n--> Loading train dataset...')
-    obj =  client.get_object(Bucket=S3_BUCKET, Key=path_train)
-    df = pd.read_csv(obj['Body'], encoding = 'utf8')
+    def prepare_text_data(test_input, max_words, max_len, feature, modeles):
+        print('--> Tokenizing and padding data...')
+        # tok = Tokenizer(num_words=max_words)
+        # tok.fit_on_texts(train_input)
+
+        # # saving
+        # with open('tokenizers/tok_%s_%s.pickle' % (feature, modeles), 'wb') as handle:
+        #     pickle.dump(tok, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+        # loading
+        with BytesIO() as data:
+            s3.Bucket(S3_BUCKET).download_fileobj('tokenizers/tok_%s_%s.pickle' % (feature, modeles), data)
+            data.seek(0)    # move back to the beginning after writing
+            tok = pickle.load(data)
+
+            # with open('tokenizers/tok_%s_%s.pickle' % (feature, modeles), 'rb') as handle:
+            #     tok = pickle.load(handle)
+
+            # sequences_train = tok.texts_to_sequences(train_input)
+            sequences_test = tok.texts_to_sequences(test_input)
+            print('--> Pad sequences (samples x time)')
+            test_input_f = sequence.pad_sequences(sequences_test, maxlen=max_len)
+
+            return test_input_f
+            
+    # # Loading data
+    # print('\n--> Loading train dataset...')
+    # obj =  client.get_object(Bucket=S3_BUCKET, Key=path_train)
+    # df = pd.read_csv(obj['Body'], encoding = 'utf8')
 
     # NIVEL 1: CNN - LSTM - BiLSTM - CNNLSTM
     # ======================================
@@ -69,7 +85,7 @@ def models_fit_predict(crawl_date, df_subm):
     for k, feature in enumerate(text_vars):
 
         # Cargamos la feature dinamicamente
-        X = df[feature]
+        # X = df[feature]
         X_subm = df_subm[feature]
 
         # Loop accross models
@@ -85,19 +101,19 @@ def models_fit_predict(crawl_date, df_subm):
             if i == 0:
                 max_features = 5000
                 maxlen = 400
-                X_test = prepare_text_data(X, X_subm, max_features, maxlen)
+                X_test = prepare_text_data(X_subm, max_features, maxlen, feature, modeles)
             elif i == 1:
                 max_features = 20000
                 maxlen = 80
-                X_test = prepare_text_data(X, X_subm, max_features, maxlen)
+                X_test = prepare_text_data(X_subm, max_features, maxlen, feature, modeles)
             elif i == 2:
                 max_features = 20000
                 maxlen = 100
-                X_test = prepare_text_data(X, X_subm, max_features, maxlen)
+                X_test = prepare_text_data(X_subm, max_features, maxlen, feature, modeles)
             elif i == 3:
                 max_features = 20000
                 maxlen = 100
-                X_test = prepare_text_data(X, X_subm, max_features, maxlen)
+                X_test = prepare_text_data(X_subm, max_features, maxlen, feature, modeles)
 
 #           # Loop del stacking
             for fold_counter in range(N_FOLDS):

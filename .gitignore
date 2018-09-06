@@ -6,6 +6,7 @@
 *.pyc
 pass.txt
 tree.txt
+rds_params.json
 
 # *.csv
 # *.json

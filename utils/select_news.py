@@ -17,12 +17,19 @@ from keras.models import load_model
 from keras.preprocessing import sequence
 from keras.preprocessing.text import Tokenizer
 
+from utils.database import check_if_exists, create_connection, create_table, insert_news
 
-def models_fit_predict(crawl_date, df_subm):
 
-    S3_BUCKET = "bluecaparticles"
-    # path_train = "data/train.csv"
-    path_model_xgb = "models/2nStageXGB.dat"
+REGION = 'eu-central-1'
+S3_BUCKET = "bluecaparticles"
+rds_host = "bbbarticles.cvpaevexhtwd.eu-central-1.rds.amazonaws.com"
+name = "bluecapbbb"
+password = "bluecap01"
+db_name = "bbbarticles"
+path_train = "data/train.csv"
+path_model_xgb = "models/2nStageXGB.dat"
+
+def models_fit_predict(fecha, df_subm):
 
     client = boto3.client('s3') #low-level functional API
     s3 = boto3.resource('s3') #high-level object-oriented API
@@ -31,7 +38,6 @@ def models_fit_predict(crawl_date, df_subm):
         print('--> Tokenizing and padding data...')
         # tok = Tokenizer(num_words=max_words)
         # tok.fit_on_texts(train_input)
-
         # # saving
         # with open('tokenizers/tok_%s_%s.pickle' % (feature, modeles), 'wb') as handle:
         #     pickle.dump(tok, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -51,7 +57,7 @@ def models_fit_predict(crawl_date, df_subm):
             test_input_f = sequence.pad_sequences(sequences_test, maxlen=max_len)
 
             return test_input_f
-            
+
     # # Loading data
     # print('\n--> Loading train dataset...')
     # obj =  client.get_object(Bucket=S3_BUCKET, Key=path_train)
@@ -67,9 +73,6 @@ def models_fit_predict(crawl_date, df_subm):
     # number of text inputs used for modeling in the first level
     text_vars = ["summary", "text", "title"] #, "keywords"
     num_text_vars = len(text_vars)
-
-    # for var in text_vars:
-    #     df_subm[var] = df_subm[var].astype(str)
 
     N_FOLDS = 4
 
@@ -124,17 +127,14 @@ def models_fit_predict(crawl_date, df_subm):
                 # with BytesIO() as data:
                 # s3.Bucket(S3_BUCKET).download_fileobj(path_model, data)
                 # data.seek(0)    # move back to the beginning after writing
-                print('--> Downloading h5 file...')
                 s3.Bucket(S3_BUCKET).download_file(path_model, 'tmp_model.h5')
-                print('--> Loading the model...')
                 model = load_model('tmp_model.h5')
                 os.remove('tmp_model.h5')
 
                 # Predict test set
                 # Guardamos una predccion de todo el test por fold y luego haremos la media
                 S_test_temp[:, fold_counter] = model.predict(X_test, verbose=0).ravel()
-
-                print('fold %d' % fold_counter)
+                print('--> fold %d' % fold_counter)
 
             # Metodo 2. Stacking haciendo media de las predicciones por fold de la parte test
             # -------------------------------------------------------------------------------------------
@@ -150,7 +150,6 @@ def models_fit_predict(crawl_date, df_subm):
 
     # 2n level training with xgboost A parameter grid for XGBoost
     # --------------------------------------------------------------------------
-
     print("\n-->Training level 2: xgboost...")
 
     # Loading 2n Stage XGBoost (random search)
@@ -169,83 +168,81 @@ def models_fit_predict(crawl_date, df_subm):
     csv_buffer = StringIO()
     subm.to_csv(csv_buffer, index=False)
     s3_resource = boto3.resource('s3')
-    s3_resource.Object(BUCKET_NAME, 'output/%s_articles_score.csv' % crawl_date).put(Body=csv_buffer.getvalue())
+    s3_resource.Object(S3_BUCKET, 'output/%s_articles_score.csv' % fecha).put(Body=csv_buffer.getvalue())
+
+    return subm
+
+def select_news(df, fecha, threshold):
+    print('--> Selecting news with probability > {}...'.format(threshold))
+    df['score'] = df['score'].astype(float)
+    BBB = df[df['score'] > threshold].sort_values(by='score', ascending=False)
+    BBB = BBB[BBB.url.str.contains("#Comentarios") == False]
+    BBB = BBB[BBB.url.str.contains("#comentarios") == False]
+    BBB = BBB.drop_duplicates(['text'])
+    BBB.to_csv('output/%s_articles_score_candidates.csv' % fecha, index=False)
+    print('\n--> These are the news selected (before checking if already existed in previous emails):\n')
+    print(BBB.groupby('newspaper').size().reset_index().rename(columns={0:'count'}).head(20))
+
+    return BBB
 
 
+def save_into_db(df_selected, fecha, database):
 
-# # here it should return the selection of news
-#
-# def select_news(data, out_file, threshold):
-#     print('Selecting news with probability > {}...'.format(threshold))
-#     df = pd.read_csv(data)
-#     df['score'] = df['score'].astype(float)
-#     BBB = df[df['score'] > threshold].sort_values(by='score', ascending=False)
-#     BBB = BBB[BBB.url.str.contains("#Comentarios") == False]
-#     BBB = BBB[BBB.url.str.contains("#comentarios") == False]
-#     BBB = BBB.drop_duplicates(['text'])
-#     BBB.to_csv(out_file, index=False)
-#     print('\nThese are the news selected (before checking if already existed in previous emails):\n')
-#     print(BBB.groupby('newspaper').size().reset_index().rename(columns={0:'count'}).head(20))
-#     print('\nDetail:\n')
-#     print(BBB.groupby(['newspaper', 'publish_date']).size().rename(columns={0:'count'}).head(20))
-#     print('')
-#
-#
-# def save_into_db(database, selected, final_BBB_file):
-#     is_first = True
-#     final_BBB = ""
-#     connection = create_connection(database)
-#     sql_create_bbb_news_table = """ CREATE TABLE IF NOT EXISTS BBBNews (
-#                                         id integer PRIMARY KEY,
-#                                         authors text,
-#                                         keywords text,
-#                                         publish_date text,
-#                                         summary text,
-#                                         text text,
-#                                         title text,
-#                                         top_image text,
-#                                         url text NOT NULL,
-#                                         score text,
-#                                         newspaper text
-#                                     ); """
-#     if connection is not None:
-#         # create projects table
-#         create_table(connection, sql_create_bbb_news_table)
-#
-#     else:
-#         print("Error! cannot create the database connection.")
-#
-#     with connection:
-#         df = pd.read_csv(selected)
-#         for index, row in df.iterrows():
-#             print(row.url)
-#             if (check_if_exists(connection, row.url) == 0):
-#                 new = (row.authors, row.keywords, row.publish_date, row.summary, row.text, row.title, row.top_image, row.url, row.score, row.newspaper)
-#                 insert_news(connection, new)
-#                 if is_first:
-#                     s1 = pd.Series([row.authors, row.keywords, row.publish_date, row.summary, row.text, row.title, row.top_image, row.url, row.score, row.newspaper,])
-#                     final_BBB = pd.DataFrame([list(s1)], columns=['authors','keywords','publish_date','summary','text','title','top_image','url','score','newspaper'])
-#                     is_first = False
-#                 else:
-#                     s1 = pd.Series([row.authors, row.keywords, row.publish_date, row.summary, row.text, row.title, row.top_image, row.url, row.score, row.newspaper])
-#                     can = pd.DataFrame([list(s1)], columns=['authors','keywords','publish_date','summary','text','title','top_image','url','score','newspaper'])
-#                     final_BBB = final_BBB.append(can)
-#
-#     connection.close()
-#
-#     try:
-#         final_BBB.to_csv(final_BBB_file, index=False)
-#         print('\nThese are the news selected:\n')
-#         print(final_BBB.groupby('newspaper').size().reset_index().rename(columns={0:'count'}))
-#         print('\nDetail:\n')
-#         print(final_BBB.groupby(['publish_date', 'newspaper']).size().reset_index().rename(columns={0:'count'}))
-#         print('')
-#     except:
-#         pass
-#
-#
-# # print('Sending the email to everybody...')
-# # print('------------------------------------------------------')
-# # email = EmailSender('amoya@bluecap.com', 'tarra1991')
-# # email.send_mail(['amoya@bluecap.com'], '%s Automatic Bluecap Banking Breakfast' % fecha, create_email_body(final_selection_xgb), 'html')
-# # email.send_mail(['egilabert@bluecap.com'], '%s XGBOOST Automatic Bluecap Banking Breakfast' % fecha, create_email_body(final_selection_xgb), 'html')
+    rds_host = database['rds_host']
+    name = database['name']
+    password = database['password']
+    db_name = database['db_name']
+
+    is_first = True
+    final_BBB = ""
+    # connection = create_connection(database)
+    connection = create_connection(rds_host, name, password, db_name)
+    sql_create_bbb_news_table = """ CREATE TABLE IF NOT EXISTS BBBNews (
+                                        id integer auto_increment PRIMARY KEY,
+                                        authors text,
+                                        keywords text,
+                                        publish_date text,
+                                        summary text,
+                                        text text,
+                                        title text,
+                                        top_image text,
+                                        url text NOT NULL,
+                                        score text,
+                                        newspaper text
+                                    ); """
+    if connection is not None:
+        # create projects table
+        create_table(connection, sql_create_bbb_news_table)
+    else:
+        print("Error! cannot create the database connection.")
+
+    with connection:
+        for index, row in df_selected.iterrows():
+            print(row.url)
+            if (check_if_exists(connection, str(row.url)) == 0):
+                new = ('', str(row.keywords), str(row.publish_date), str(row.summary), str(row.text), str(row.title), str(row.top_image), str(row.url), str(row.score), str(row.newspaper))
+                # new = (row.authors, row.keywords, row.publish_date, row.summary, row.text, row.title, row.top_image, row.url, row.score, row.newspaper)
+                insert_news(connection, new)
+                if is_first:
+                    s1 = pd.Series(['', row.keywords, row.publish_date, row.summary, row.text, row.title, row.top_image, row.url, row.score, row.newspaper,])
+                    # s1 = pd.Series([row.authors, row.keywords, row.publish_date, row.summary, row.text, row.title, row.top_image, row.url, row.score, row.newspaper,])
+                    final_BBB = pd.DataFrame([list(s1)], columns=['authors','keywords','publish_date','summary','text','title','top_image','url','score','newspaper'])
+                    is_first = False
+                else:
+                    s1 = pd.Series(['', row.keywords, row.publish_date, row.summary, row.text, row.title, row.top_image, row.url, row.score, row.newspaper])
+                    # s1 = pd.Series([row.authors, row.keywords, row.publish_date, row.summary, row.text, row.title, row.top_image, row.url, row.score, row.newspaper])
+                    can = pd.DataFrame([list(s1)], columns=['authors','keywords','publish_date','summary','text','title','top_image','url','score','newspaper'])
+                    final_BBB = final_BBB.append(can)
+
+    connection.close()
+
+    try:
+        final_BBB.to_csv('final_BBB_file', index=False)
+        print('\nThese are the news selected:\n')
+        print(final_BBB.groupby('newspaper').size().reset_index().rename(columns={0:'count'}))
+        print('\nDetail:\n')
+        print(final_BBB.groupby(['publish_date', 'newspaper']).size().reset_index().rename(columns={0:'count'}))
+        print('')
+        return final_BBB
+    except:
+        pass

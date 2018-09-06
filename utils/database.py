@@ -1,15 +1,22 @@
-import sqlite3
-from sqlite3 import Error
+# import sqlite3
+# from sqlite3 import Error
 
+import pymysql
 
-def create_connection(db_file):
+def create_connection(rds_host, name, password, db_name, timeout=5):
     """ create a database connection to the SQLite database
         specified by db_file
-    :param db_file: database file
+    :param rds_host: rds host
+    :param name: user name
+    :param password: password
+    :param db_name: database file name
+    :param timeout:
     :return: Connection object or None
     """
     try:
-        conn = sqlite3.connect(db_file)
+        conn = pymysql.connect(rds_host,
+        user=name, passwd=password, db=db_name, connect_timeout=timeout, charset='utf8')
+        print('--> Successful connection')
         return conn
     except Error as e:
         print(e)
@@ -47,10 +54,12 @@ def insert_news(conn, new):
     :param new:
     :return: new id
     """
-    sql = ''' INSERT INTO BBBNews(authors,keywords,publish_date,summary,text,title,top_image,url,score,newspaper)
-              VALUES(?,?,?,?,?,?,?,?,?,?) '''
+    # sql = ''' INSERT INTO BBBNews(authors,keywords,publish_date,summary,text,title,top_image,url,score,newspaper)
+    #           VALUES(?,?,?,?,?,?,?,?,?,?) '''
     cur = conn.cursor()
-    cur.execute(sql, new)
+    # cur.execute(sql, new)
+    # cur.execute("INSERT INTO BBBNews(authors,keywords,publish_date,summary,text,title,top_image,url,score,newspaper) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", (new,))
+    cur.execute("INSERT INTO BBBNews(authors,keywords,publish_date,summary,text,title,top_image,url,score,newspaper) VALUES%s", [new])
     return cur.lastrowid
 
 def update_news(conn, new):
@@ -107,8 +116,9 @@ def select_all_tasks(conn):
 
 def check_if_exists(conn, url):
     cur = conn.cursor()
-    sql = 'SELECT url FROM BBBNews WHERE url = ?'
-    cur.execute(sql, (url,))
+    # sql = 'SELECT url FROM BBBNews WHERE url = ?'
+    # cur.execute(sql, (url,))
+    cur.execute("SELECT url FROM BBBNews WHERE url = %s", [url])
     data=cur.fetchone()
     if data is None:
         return 0

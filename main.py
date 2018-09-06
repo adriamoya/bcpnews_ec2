@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 import os
+import json
 import time
 import datetime
 import pandas as pd
 
 from crawlers.crawlers import process_all_newspapers
-from utils.select_news import models_fit_predict #, save_into_db, select_news
+from utils.select_news import models_fit_predict, select_news, save_into_db
 # from utils.allow_stop import possible_stop
 # from utils.get_date import get_date_input
 # from utils.mail_body_generator import create_email_body
 # from utils.send_email import EmailSender
-# from utils.similarity import build_similarities
+from utils.similarity import build_similarities
 
 if __name__ == "__main__":
 
@@ -25,34 +26,38 @@ if __name__ == "__main__":
     # print('-'*80)
     # df = process_all_newspapers(fecha)
     # print('Done.')
+
+    # # Fitting and predicting. Dumping predictions to `model_results_`.
+    # print('\nTraining the models and predicting...')
+    # print('-'*80)
+    # df = models_fit_predict(fecha, df)
+    # print('Done.')
+
     import boto3
     client = boto3.client('s3') #low-level functional API
-    newspaper_articles = client.get_object(Bucket="bluecaparticles", Key="output/%s_articles.csv" % fecha)
+    newspaper_articles = client.get_object(Bucket="bluecaparticles", Key="output/%s_articles_score.csv" % fecha)
     df = pd.read_csv(newspaper_articles['Body'], encoding='utf8')
+    df.reset_index(inplace=True)
 
-
-    # Fitting and predicting. Dumping predictions to `model_results_`.
-    print('\nTraining the models and predicting...')
+    # Selection news with score higher than.
+    print('\nSelecting higher score news...')
     print('-'*80)
-    models_fit_predict(crawl_date, df)
+    df = select_news(df, fecha, threshold=0.5)
     print('Done.')
-    #
-    # # Selection news with score higher than.
-    # print('\nSelecting higher score news...')
-    # print('-'*80)
-    # select_news(model_results_xgb, news_selection_xgb, 0.5)
-    # ## select_news(model_results_lasso, news_selection_lasso, 0.5)
 
-    # # Save selected news to database.
-    # print('\nSaving new articles into database...')
-    # print('-'*80)
-    # ## save_into_db(database, news_selection_lasso, final_selection_lasso)
-    # save_into_db(database, news_selection_xgb, final_selection_xgb)
+    # Save selected news to database.
+    print('\nSaving new articles into database...')
+    print('-'*80)
+    with open('rds_params.json') as f:
+        database = json.load(f)
+    df = save_into_db(df, fecha, database)
 
-    # # Build similarities from news selection.
-    # print('\nSimilarities...')
-    # print('-'*80)
-    # build_similarities(crawl_date, final_selection_xgb, threshold=0.28, verbose=False)
+    print(df.shape)
+
+    # Build similarities from news selection.
+    print('\nSimilarities...')
+    print('-'*80)
+    df = build_similarities(df, fecha, threshold=0.20, verbose=False)
     #
     # # Read password.
     # PASS = open('pass.txt').read()

@@ -9,12 +9,8 @@ from nltk.tokenize import word_tokenize
 pp = pprint.PrettyPrinter(indent=4)
 
 
-def build_similarities(crawl_date, news_selection, threshold=0.5, verbose=True):
+def build_similarities(df, fecha, threshold=0.5, verbose=True):
 
-	# Running date.
-	fecha = crawl_date.strftime("%Y%m%d")
-
-	df = pd.read_csv(news_selection)
 	sim = Similarities(df)
 	sims_matrix = sim.build_similarity_matrix()
 	articles = sim.return_similar_articles(threshold=threshold, verbose=verbose)
@@ -26,6 +22,8 @@ def build_similarities(crawl_date, news_selection, threshold=0.5, verbose=True):
 		line = json.dumps(article, ensure_ascii=False) + "\n"
 		file.write(line)
 	file.close()
+
+	return articles
 	print("Done.")
 
 
@@ -41,7 +39,7 @@ class Similarities(object):
 
 	def build_tfidf(self):
 		"""	Train tf-idf model.	"""
-		
+
 		print("\nBuilding tf-idf model ...")
 		print("-"*80)
 		# We will now use NLTK to tokenize
@@ -91,8 +89,8 @@ class Similarities(object):
 
 
 	def build_similarity_matrix(self):
-		"""	
-		Generates the similarty matrix by getting the individual 
+		"""
+		Generates the similarty matrix by getting the individual
 		similarities of each article.
 		"""
 		print("\nBuilding similarity matrix ...")
@@ -135,7 +133,7 @@ class Similarities(object):
 
 
 	def return_similar_articles(self, threshold=0.5, verbose=True):
-		""" 
+		"""
 		Returns a list of articles in which if there are similar
 		articles, the parent will be the one with higher score and the
 		childs are nested under `related_articles` attribute.
@@ -146,32 +144,50 @@ class Similarities(object):
 
 		# Creating array of parent articles (with childs nested).
 		articles = []
+		print(self.df_articles)
+		print(self.df_articles.iloc[1])
+
+		"""
+
+		CONTINUE HERE --> try to understand why it is not working...
+
+		"""
+
+
+
+
 		for sim_tuple in similar_articles:
-			try:
-				principal_article = self.df_articles.loc[sim_tuple[0][0]].to_dict()
-				principal_article['id'] = sim_tuple[0][0]
-				child_article = self.df_articles.loc[sim_tuple[0][1]].to_dict()
-				child_article['id'] = sim_tuple[0][1]
-				articles_saved = [i['url'] for i in articles]
-				if principal_article['url'] in articles_saved:
-					articles[-1]['related_articles'].append(child_article)
-				else:
-					principal_article['related_articles'] = []
-					principal_article['related_articles'].append(child_article)
-					articles.append(principal_article)
-				# delete child articles.
-				self.df_articles.drop(self.df_articles.loc[[sim_tuple[0][1]]].index, inplace=True)
-			except:
-				pass
-			
+			# try:
+			print(sim_tuple[0])
+			print(sim_tuple[0][0])
+			print(self.df_articles.iloc[sim_tuple[0][0]])
+			principal_article = self.df_articles.iloc[sim_tuple[0][0]].to_dict()
+			principal_article['id'] = sim_tuple[0][0]
+			child_article = self.df_articles.iloc[sim_tuple[0][1]].to_dict()
+			child_article['id'] = sim_tuple[0][1]
+			articles_saved = [i['url'] for i in articles]
+			if principal_article['url'] in articles_saved:
+				articles[-1]['related_articles'].append(child_article)
+			else:
+				principal_article['related_articles'] = []
+				principal_article['related_articles'].append(child_article)
+				articles.append(principal_article)
+			# delete child articles.
+			self.df_articles.drop(self.df_articles.iloc[[sim_tuple[0][1]]].index, inplace=True)
+			# except:
+			# 	pass
+
+		print(articles)
+
 		# Delete all parent articles.
 		for sim_tuple in similar_articles:
 			try:
-				self.df_articles.drop(self.df_articles.loc[[sim_tuple[0][0]]].index, inplace=True)
+				self.df_articles.drop(self.df_articles.iloc[[sim_tuple[0][0]]].index, inplace=True)
 			except:
 				pass
 
 		# Print dependency tree.
+		print('--> Printing dependency tree...')
 		for article in articles:
 			print("\nParent: (%s) %s" % (article['id'], article['title']))
 			for related_article in article['related_articles']:

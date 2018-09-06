@@ -37,6 +37,11 @@ class ArticleScraper(Article):
                 self.article_obj["title"] = ""
 
             try:
+                self.article_obj["authors"] = self.article.authors
+            except:
+                self.article_obj["authors"] = ""
+
+            try:
                 self.article_obj["publish_date"] = self.article.publish_date
                 # self.article_obj["publish_date"] = self.article.publish_date.encode("utf-8").strip()
             except:

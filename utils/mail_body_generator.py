@@ -5,16 +5,15 @@ pp = pprint.PrettyPrinter(indent=4)
 
 def create_email_body(data):
 
-    print('Building email body ...')
+    print('--> Building email body ...')
 
+    # # read data# read
+    # final_articles_data = []
+    # with open(data) as f:
+    #     for line in f:
+    #         final_articles_data.append(json.loads(line.encode('utf-8')))
 
-    # read data# read
-    final_articles_data = []
-    with open(data) as f:
-        for line in f:
-            final_articles_data.append(json.loads(line.encode('utf-8')))
-
-    df = pd.DataFrame(final_articles_data)
+    df = pd.DataFrame(data)
 
     msg = """\
     <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">

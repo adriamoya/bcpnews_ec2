@@ -15,16 +15,16 @@ def build_similarities(df, fecha, threshold=0.5, verbose=True):
 	sims_matrix = sim.build_similarity_matrix()
 	articles = sim.return_similar_articles(threshold=threshold, verbose=verbose)
 
-	# Save results.
-	print("\nSaving articles with similarities ...")
-	file = codecs.open('./data/%s_04_articles.json' % fecha, 'w', encoding='utf-8')
-	for article in articles:
-		line = json.dumps(article, ensure_ascii=False) + "\n"
-		file.write(line)
-	file.close()
+	# # Save results.
+	# print("\nSaving articles with similarities ...")
+	# file = codecs.open('./data/%s_04_articles.json' % fecha, 'w', encoding='utf-8')
+	# for article in articles:
+	# 	line = json.dumps(article, ensure_ascii=False) + "\n"
+	# 	file.write(line)
+	# file.close()
 
-	return articles
 	print("Done.")
+	return articles
 
 
 class Similarities(object):
@@ -34,7 +34,7 @@ class Similarities(object):
 		print("-"*80)
 		self.df_articles = df_articles
 		self.articles = df_articles[text].values
-		print("Number of articles:", "{:,}".format(len(self.articles)))
+		print("--> Number of articles:", "{:,}".format(len(self.articles)))
 		self.build_tfidf()
 
 	def build_tfidf(self):
@@ -43,27 +43,27 @@ class Similarities(object):
 		print("\nBuilding tf-idf model ...")
 		print("-"*80)
 		# We will now use NLTK to tokenize
-		print('Word tokenization ...')
+		print('--> Word tokenization ...')
 		#print(self.articles[0])
 		gen_docs = [[w.lower() for w in word_tokenize(str(text))] for text in self.articles]
 
 		# We will create a dictionary from a list of documents. A dictionary maps every word to a number.
-		print("Creating dictionary ...")
+		print("--> Creating dictionary ...")
 		self.dictionary = gensim.corpora.Dictionary(gen_docs)
-		print("Number of words in dictionary:", "{:,}".format(len(self.dictionary)))
+		print("--> Number of words in dictionary:", "{:,}".format(len(self.dictionary)))
 
 		# Now we will create a corpus. A corpus is a list of bags of words.
 		# A bag-of-words representation for a document just lists the number of times each word occurs in the document.
-		print("Creating bag-of-words corpus ...")
+		print("--> Creating bag-of-words corpus ...")
 		corpus = [self.dictionary.doc2bow(gen_doc) for gen_doc in gen_docs]
 
 		# Now we create a tf-idf model from the corpus. Note that num_nnz is the number of tokens.
-		print("Building tf-idf model from corpus ...")
+		print("--> Building tf-idf model from corpus ...")
 		self.tf_idf = gensim.models.TfidfModel(corpus)
 		print(self.tf_idf)
 
 		# Now we will create a similarity measure object in tf-idf space.
-		print("Creating similarity measures and storing ...")
+		print("--> Creating similarity measures and storing ...")
 		self.sims = gensim.similarities.Similarity('./sims',
 		                                      self.tf_idf[corpus],
 		                                      num_features=len(self.dictionary))
@@ -118,7 +118,7 @@ class Similarities(object):
 				if similarity > threshold and idx_article < idx_sim_article:  # !=
 					similar_articles.append([(idx_article, idx_sim_article), similarity])
 
-		print("Similar articles:")
+		print("--> Similar articles:")
 		pp.pprint(similar_articles)
 
 		# Print results
@@ -144,50 +144,34 @@ class Similarities(object):
 
 		# Creating array of parent articles (with childs nested).
 		articles = []
-		print(self.df_articles)
-		print(self.df_articles.iloc[1])
-
-		"""
-
-		CONTINUE HERE --> try to understand why it is not working...
-
-		"""
-
-
-
-
+		self.df_articles.reset_index(inplace=True)
 		for sim_tuple in similar_articles:
-			# try:
-			print(sim_tuple[0])
-			print(sim_tuple[0][0])
-			print(self.df_articles.iloc[sim_tuple[0][0]])
-			principal_article = self.df_articles.iloc[sim_tuple[0][0]].to_dict()
-			principal_article['id'] = sim_tuple[0][0]
-			child_article = self.df_articles.iloc[sim_tuple[0][1]].to_dict()
-			child_article['id'] = sim_tuple[0][1]
-			articles_saved = [i['url'] for i in articles]
-			if principal_article['url'] in articles_saved:
-				articles[-1]['related_articles'].append(child_article)
-			else:
-				principal_article['related_articles'] = []
-				principal_article['related_articles'].append(child_article)
-				articles.append(principal_article)
-			# delete child articles.
-			self.df_articles.drop(self.df_articles.iloc[[sim_tuple[0][1]]].index, inplace=True)
-			# except:
-			# 	pass
-
-		print(articles)
+			try:
+				principal_article = self.df_articles.loc[sim_tuple[0][0]].to_dict()
+				principal_article['id'] = sim_tuple[0][0]
+				child_article = self.df_articles.loc[sim_tuple[0][1]].to_dict()
+				child_article['id'] = sim_tuple[0][1]
+				articles_saved = [i['url'] for i in articles]
+				if principal_article['url'] in articles_saved:
+					articles[-1]['related_articles'].append(child_article)
+				else:
+					principal_article['related_articles'] = []
+					principal_article['related_articles'].append(child_article)
+					articles.append(principal_article)
+				# delete child articles.
+				self.df_articles.drop(self.df_articles.loc[[sim_tuple[0][1]]].index, inplace=True)
+			except:
+				pass
 
 		# Delete all parent articles.
 		for sim_tuple in similar_articles:
 			try:
-				self.df_articles.drop(self.df_articles.iloc[[sim_tuple[0][0]]].index, inplace=True)
+				self.df_articles.drop(self.df_articles.loc[[sim_tuple[0][0]]].index, inplace=True)
 			except:
 				pass
 
 		# Print dependency tree.
-		print('--> Printing dependency tree...')
+		print('\n--> Printing dependency tree...')
 		for article in articles:
 			print("\nParent: (%s) %s" % (article['id'], article['title']))
 			for related_article in article['related_articles']:

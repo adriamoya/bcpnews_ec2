@@ -22,10 +22,6 @@ from utils.database import check_if_exists, create_connection, create_table, ins
 
 REGION = 'eu-central-1'
 S3_BUCKET = "bluecaparticles"
-rds_host = "bbbarticles.cvpaevexhtwd.eu-central-1.rds.amazonaws.com"
-name = "bluecapbbb"
-password = "bluecap01"
-db_name = "bbbarticles"
 path_train = "data/train.csv"
 path_model_xgb = "models/2nStageXGB.dat"
 
@@ -238,9 +234,9 @@ def save_into_db(df_selected, fecha, database):
 
     try:
         final_BBB.to_csv('final_BBB_file', index=False)
-        print('\nThese are the news selected:\n')
+        print('\n--> These are the news selected:\n')
         print(final_BBB.groupby('newspaper').size().reset_index().rename(columns={0:'count'}))
-        print('\nDetail:\n')
+        print('\n--> Detail:\n')
         print(final_BBB.groupby(['publish_date', 'newspaper']).size().reset_index().rename(columns={0:'count'}))
         print('')
         return final_BBB

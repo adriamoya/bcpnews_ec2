@@ -22,56 +22,56 @@ class ArticleScraper(Article):
 
     def parse_article(self):
         """ Download, Parse and NLP a given article """
+        # try:
+        # download source code
+        self.article.download()
+
+        # parse code
+        self.article.parse()
+
+        # populate article obj with parsed data
         try:
-            # download source code
-            self.article.download()
-
-            # parse code
-            self.article.parse()
-
-            # populate article obj with parsed data
-            try:
-                self.article_obj["title"] = self.article.title
-                # self.article_obj["title"] = self.article.title.encode("utf-8").strip()
-            except:
-                self.article_obj["title"] = ""
-
-            try:
-                self.article_obj["authors"] = self.article.authors
-            except:
-                self.article_obj["authors"] = ""
-
-            try:
-                self.article_obj["publish_date"] = self.article.publish_date
-                # self.article_obj["publish_date"] = self.article.publish_date.encode("utf-8").strip()
-            except:
-                self.article_obj["publish_date"] = ""
-
-            try:
-                self.article_obj["text"] = self.article.text
-                # self.article_obj["text"] = self.article.text.encode("utf-8").strip()
-            except:
-                self.article_obj["text"] = ""
-
-            try:
-                self.article_obj["top_image"] = self.article.top_image
-            except:
-                self.article_obj["top_image"] = ""
-
-            self.article.nlp()
-
-            try:
-                self.article_obj["summary"] = self.article.summary
-            except:
-                self.article_obj["summary"] = ""
-
-            try:
-                self.article_obj["keywords"] = self.article.keywords
-            except:
-                self.article_obj["keywords"] = []
-
-            # print(self.article_obj)
-            return self.article_obj
-
+            self.article_obj["title"] = self.article.title
+            # self.article_obj["title"] = self.article.title.encode("utf-8").strip()
         except:
-            pass
+            self.article_obj["title"] = ""
+
+        try:
+            self.article_obj["authors"] = self.article.authors
+        except:
+            self.article_obj["authors"] = ""
+
+        try:
+            self.article_obj["publish_date"] = self.article.publish_date
+            # self.article_obj["publish_date"] = self.article.publish_date.encode("utf-8").strip()
+        except:
+            self.article_obj["publish_date"] = ""
+
+        try:
+            self.article_obj["text"] = self.article.text
+            # self.article_obj["text"] = self.article.text.encode("utf-8").strip()
+        except:
+            self.article_obj["text"] = ""
+
+        try:
+            self.article_obj["top_image"] = self.article.top_image
+        except:
+            self.article_obj["top_image"] = ""
+
+        self.article.nlp()
+
+        try:
+            self.article_obj["summary"] = self.article.summary
+        except:
+            self.article_obj["summary"] = ""
+
+        try:
+            self.article_obj["keywords"] = self.article.keywords
+        except:
+            self.article_obj["keywords"] = []
+
+        # print(self.article_obj)
+        return self.article_obj
+
+        # except:
+        #     pass

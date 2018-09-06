@@ -39,7 +39,8 @@ def process_all_newspapers(crawl_date):
         print(df_temp.shape)
         urls_downloaded.append(df_temp)
     del df_temp
-    df_subm = pd.concat(urls_downloaded, sort=True)
+    df_subm = pd.concat(urls_downloaded)
+    # df_subm = pd.concat(urls_downloaded, sort=True)
     print(df_subm.shape)
 
     # Download articles

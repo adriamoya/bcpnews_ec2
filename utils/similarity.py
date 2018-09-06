@@ -175,7 +175,7 @@ class Similarities(object):
 		for article in articles:
 			print("\nParent: (%s) %s" % (article['id'], article['title']))
 			for related_article in article['related_articles']:
-				print(" |__ Child: (%s) %s" % (related_article['id'], related_article['title']))
+				print(" |__ Child: (%s) %s" % (related_article['id'], related_article['title'].encode('ascii', 'ignore')))
 
 		# Add remaining articles.
 		for idx, row in self.df_articles.iterrows():

@@ -173,7 +173,7 @@ class Similarities(object):
 		# Print dependency tree.
 		print('\n--> Printing dependency tree...')
 		for article in articles:
-			print("\nParent: (%s) %s" % (article['id'], article['title']))
+			print("\nParent: (%s) %s" % (article['id'], article['title'].encode('ascii', 'ignore')))
 			for related_article in article['related_articles']:
 				print(" |__ Child: (%s) %s" % (related_article['id'], related_article['title'].encode('ascii', 'ignore')))
 

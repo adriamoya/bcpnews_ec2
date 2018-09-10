@@ -50,7 +50,7 @@ if __name__ == "__main__":
     # Build similarities from news selection.
     print('\nSimilarities...')
     print('-'*80)
-    final_articles = build_similarities(df, fecha, threshold=0.20, verbose=False)
+    final_articles = build_similarities(df, fecha, threshold=0.30, verbose=False)
 
     # Read password.
     PASS = open('pass.txt').read()

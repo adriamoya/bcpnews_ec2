@@ -1,6 +1,6 @@
 # Bluecap Banking Breakfast
 
-Deployment package suited for running in EC2 (t2.medium).
+Deployment package suited for running in EC2 (Ubuntu Server 16.04 LTS (HVM), t2.medium).
 
 ```shell
 sudo apt-get -y update

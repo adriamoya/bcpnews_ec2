@@ -16,7 +16,8 @@ from utils.similarity import build_similarities
 if __name__ == "__main__":
 
     # Request input date to crawl. Default is today().
-    crawl_date = datetime.datetime.strptime('20180814',"%Y%m%d")  # get_date_input()
+    crawl_date = datetime.datetime.now()
+    # crawl_date = datetime.datetime.strptime('20180814',"%Y%m%d")  # get_date_input()
 
     # Running date.
     fecha = crawl_date.strftime("%Y%m%d")

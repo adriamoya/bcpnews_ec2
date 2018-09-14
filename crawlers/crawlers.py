@@ -48,9 +48,10 @@ def process_all_newspapers(crawl_date):
     articles_obj = []
     for idx, row in df_subm.iterrows():
         url = row['url']
-        print(url)
         newspaper = row['newspaper']
-        new_article = ArticleScraper(url, newspaper)
+        timestamp = row['timestamp']
+        print(url)
+        new_article = ArticleScraper(url, timestamp, newspaper)
         new_article_obj = new_article.parse_article()
         if new_article_obj:
             articles_obj.append(new_article_obj)

@@ -59,7 +59,7 @@ def insert_news(conn, new):
     cur = conn.cursor()
     # cur.execute(sql, new)
     # cur.execute("INSERT INTO BBBNews(authors,keywords,publish_date,summary,text,title,top_image,url,score,newspaper) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", (new,))
-    cur.execute("INSERT INTO BBBNews(authors,keywords,publish_date,summary,text,title,top_image,url,score,newspaper) VALUES%s", [new])
+    cur.execute("INSERT INTO BBBNews(authors,keywords,publish_date,summary,text,title,top_image,url,score,newspaper,timestamp) VALUES%s", [new])
     return cur.lastrowid
 
 def update_news(conn, new):

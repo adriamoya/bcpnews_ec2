@@ -204,7 +204,8 @@ def save_into_db(df_selected, fecha, database):
                                         top_image text,
                                         url text NOT NULL,
                                         score text,
-                                        newspaper text
+                                        newspaper text,
+                                        timestamp datetime
                                     ); """
     if connection is not None:
         # create projects table
@@ -216,18 +217,18 @@ def save_into_db(df_selected, fecha, database):
         for index, row in df_selected.iterrows():
             print(row.url)
             if (check_if_exists(connection, str(row.url)) == 0):
-                new = ('', str(row.keywords), str(row.publish_date), str(row.summary), str(row.text), str(row.title), str(row.top_image), str(row.url), str(row.score), str(row.newspaper))
+                new = ('', str(row.keywords), str(row.publish_date), str(row.summary), str(row.text), str(row.title), str(row.top_image), str(row.url), str(row.score), str(row.newspaper), str(row.timestamp))
                 # new = (row.authors, row.keywords, row.publish_date, row.summary, row.text, row.title, row.top_image, row.url, row.score, row.newspaper)
                 insert_news(connection, new)
                 if is_first:
-                    s1 = pd.Series(['', row.keywords, row.publish_date, row.summary, row.text, row.title, row.top_image, row.url, row.score, row.newspaper,])
+                    s1 = pd.Series(['', row.keywords, row.publish_date, row.summary, row.text, row.title, row.top_image, row.url, row.score, row.newspaper, row.timestamp])
                     # s1 = pd.Series([row.authors, row.keywords, row.publish_date, row.summary, row.text, row.title, row.top_image, row.url, row.score, row.newspaper,])
-                    final_BBB = pd.DataFrame([list(s1)], columns=['authors','keywords','publish_date','summary','text','title','top_image','url','score','newspaper'])
+                    final_BBB = pd.DataFrame([list(s1)], columns=['authors','keywords','publish_date','summary','text','title','top_image','url','score','newspaper','timestamp'])
                     is_first = False
                 else:
-                    s1 = pd.Series(['', row.keywords, row.publish_date, row.summary, row.text, row.title, row.top_image, row.url, row.score, row.newspaper])
+                    s1 = pd.Series(['', row.keywords, row.publish_date, row.summary, row.text, row.title, row.top_image, row.url, row.score, row.newspaper, row.timestamp])
                     # s1 = pd.Series([row.authors, row.keywords, row.publish_date, row.summary, row.text, row.title, row.top_image, row.url, row.score, row.newspaper])
-                    can = pd.DataFrame([list(s1)], columns=['authors','keywords','publish_date','summary','text','title','top_image','url','score','newspaper'])
+                    can = pd.DataFrame([list(s1)], columns=['authors','keywords','publish_date','summary','text','title','top_image','url','score','newspaper','timestamp'])
                     final_BBB = final_BBB.append(can)
 
     connection.close()

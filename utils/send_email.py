@@ -26,7 +26,7 @@ class EmailSender:
         msg['To'] = ", ".join(to)
         msg['Subject'] = subject
         if _bcc:
-            bcc = ['enric.gilabert@nemuru.com', 'pere.monras@nemuru.com']
+            bcc = ['enric.gilabert@nemuru.com', 'pere.monras@nemuru.com', 'cmoyag4@gmail.com']
         else:
             bcc = ['']
         cc = ['']

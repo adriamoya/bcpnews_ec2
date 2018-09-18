@@ -4,9 +4,14 @@
 *.log
 *.netlify
 *.pyc
+*.py.swp
+*.py.save
+
+log
 pass.txt
 tree.txt
 rds_params.json
+final_BBB_file
 
 # *.csv
 # *.json
@@ -17,3 +22,5 @@ dist/
 env/
 tokenizers/
 output/
+
+

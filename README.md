@@ -20,3 +20,10 @@ Don't forget to run ...
 import nltk
 nltk.download('punkt')
 ```
+
+Run on reboot
+
+```shell
+crontab -e  # open crotab editor (file in /tmp/crontab...)
+@reboot /home/ubuntu/ec2_model/run.sh  # at reboot execute ~/run.sh
+```

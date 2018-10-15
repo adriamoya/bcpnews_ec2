@@ -59,6 +59,6 @@ if __name__ == "__main__":
     print('\nSending email...')
     print('-'*80)
     email = EmailSender('bankingbreakfast@bluecap.com', PASS)
-    #email.send_mail(['amoya@bluecap.com'], '%s Automatic Bluecap Banking Breakfast' % fecha, create_email_body(final_articles), 'html')
-    email.send_mail(['bluecapglobal@bluecap.com'], '%s Automatic Bluecap Banking Breakfast' % fecha, create_email_body(final_articles), 'html', _bcc=True)
+    email.send_mail(['amoya@bluecap.com'], '%s Automatic Bluecap Banking Breakfast' % fecha, create_email_body(final_articles), 'html')
+    # email.send_mail(['bluecapglobal@bluecap.com'], '%s Automatic Bluecap Banking Breakfast' % fecha, create_email_body(final_articles), 'html', _bcc=True)
     print('\nDone.')

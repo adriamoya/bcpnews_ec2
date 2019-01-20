@@ -1,4 +1,4 @@
-# [BBB Application](https://medium.com/@adriamoyaortiz/classifying-news-articles-to-build-a-customized-newsletter-automatically-ede6ad9ef725)
+# [BBB Application](https://medium.com/@adriamoyaortiz/classifying-news-to-build-a-newsletter-with-deep-learning-part-2-cd6104fa7317)
 
 This Python app runs the following subprocesses:
 
